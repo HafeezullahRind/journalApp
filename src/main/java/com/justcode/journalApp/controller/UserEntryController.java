@@ -1,59 +1,58 @@
 package com.justcode.journalApp.controller;
 
 
-import com.justcode.journalApp.entity.JournalEntry;
-import com.justcode.journalApp.service.JournalEntryService;
-import org.bson.types.ObjectId;
+
+import com.justcode.journalApp.entity.User;
+import com.justcode.journalApp.service.UserEntryService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
+
 @RestController
-@RequestMapping("/journal")
-public class JournalEntryController {
+@RequestMapping("/users")
+public class UserEntryController {
 
     @Autowired
-    private JournalEntryService journalEntryService;
+    private UserEntryService userEntryService;
+    @Autowired
+    private  UserEntryService userService;
+
 
     @GetMapping
-    public List<JournalEntry> getAll() {
-        return  journalEntryService.getAll();
+    public ResponseEntity<List<User>> getAlljournalEntries() {
+        List<User> users = userEntryService.getAll();
+        if(users != null && !users.isEmpty()) {
+            return new ResponseEntity<>(users, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @PostMapping
-    public boolean createEntry(@RequestBody JournalEntry entry) {
-        entry.setDate(LocalDateTime.now());
-        journalEntryService.save(entry);
-        return true;
+    public ResponseEntity<User> createUser(@RequestBody User user) {
+        userEntryService.save(user);
+        return new ResponseEntity<>(user, HttpStatus.CREATED);
     }
 
-    @GetMapping("id/{myId}")
-    public JournalEntry getById(@PathVariable ObjectId myId) {
-        return journalEntryService.getById(myId);
-    }
 
-    @PutMapping("id/{myId}")
-    public boolean updateEntry(@PathVariable ObjectId myId, @RequestBody JournalEntry entry) {
-        JournalEntry existingEntry = journalEntryService.getById(myId);
-
-        if(existingEntry != null) {
-            existingEntry.setTitle(entry.getTitle() != null && !entry.getTitle().isEmpty() ? entry.getTitle() : existingEntry.getTitle());
-            existingEntry.setContent(entry.getContent() != null && !entry.getContent().isEmpty() ? entry.getContent() : existingEntry.getContent());
-            journalEntryService.save(existingEntry);
-            return true;
+    @PutMapping("/{username}")
+    public ResponseEntity<User> updateUser(@RequestBody User user, @PathVariable String username) {
+        User existingUser = userEntryService.findByUsername(username);
+        if (existingUser != null) {
+            // Update the existing user
+            existingUser.setUsername(!user.getUsername().isEmpty() ? user.getUsername() : existingUser.getUsername());
+            existingUser.setPassword(!user.getPassword().isEmpty() ? user.getPassword() : existingUser.getPassword());
+            userEntryService.save(existingUser);
+            return new ResponseEntity<>(existingUser, HttpStatus.OK);
         }
-        return false;
-    }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+ }
 
 
-
-    @DeleteMapping("id/{myId}")
-    public boolean deleteById(@PathVariable ObjectId myId) {
-     journalEntryService.deleteById(myId);
-     return true;
-    }
 
 
 
