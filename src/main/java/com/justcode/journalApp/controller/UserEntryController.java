@@ -18,12 +18,10 @@ public class UserEntryController {
 
     @Autowired
     private UserEntryService userEntryService;
-    @Autowired
-    private  UserEntryService userService;
 
 
     @GetMapping
-    public ResponseEntity<List<User>> getAlljournalEntries() {
+    public ResponseEntity<List<User>> getAllJournalEntries() {
         List<User> users = userEntryService.getAll();
         if(users != null && !users.isEmpty()) {
             return new ResponseEntity<>(users, HttpStatus.OK);
@@ -51,9 +49,3 @@ public class UserEntryController {
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
  }
-
-
-
-
-
-}

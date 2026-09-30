@@ -2,14 +2,15 @@ package com.justcode.journalApp.controller;
 
 
 import com.justcode.journalApp.entity.JournalEntry;
+import com.justcode.journalApp.entity.User;
 import com.justcode.journalApp.service.JournalEntryService;
+import com.justcode.journalApp.service.UserEntryService;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,20 +21,26 @@ public class JournalEntryController {
     @Autowired
     private JournalEntryService journalEntryService;
 
-    @GetMapping
-    public ResponseEntity<List<JournalEntry>> getAll() {
-        List<JournalEntry> entries = journalEntryService.getAll();
+    @Autowired
+    private UserEntryService userEntryService;
+
+    @GetMapping("{userName}")
+    public ResponseEntity<List<JournalEntry>> getAllJournalEntriesOfUser(@PathVariable String userName) {
+        User user = userEntryService.findByUsername(userName);
+        if (user == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        List<JournalEntry> entries = user.getJournalEntries();
         if(entries != null && !entries.isEmpty()) {
             return new ResponseEntity<>(entries, HttpStatus.OK);
         }
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    @PostMapping
-    public ResponseEntity<JournalEntry> createEntry(@RequestBody JournalEntry entry) {
+    @PostMapping("{userName}")
+    public ResponseEntity<JournalEntry> createEntry(@PathVariable String userName, @RequestBody JournalEntry entry) {
      try {
-         entry.setDate(LocalDateTime.now());
-         journalEntryService.save(entry);
+         journalEntryService.save(entry , userName);
          return new ResponseEntity<>(entry, HttpStatus.CREATED);
         } catch (Exception e) {
             // Handle the exception, e.g., log it
@@ -52,8 +59,9 @@ public class JournalEntryController {
         return new ResponseEntity<>(entry.get(), HttpStatus.OK);
     }
 
-    @PutMapping("id/{myId}")
-    public ResponseEntity<?> updateEntry(@PathVariable ObjectId myId, @RequestBody JournalEntry entry) {
+    @PutMapping("id/{userName}/{myId}")
+    public ResponseEntity<?> updateEntry(@PathVariable ObjectId myId, @RequestBody JournalEntry entry,
+                                         @PathVariable String userName) {
         JournalEntry existingEntry = journalEntryService.getById(myId);
 
         if(existingEntry != null) {
@@ -67,9 +75,9 @@ public class JournalEntryController {
 
 
 
-    @DeleteMapping("id/{myId}")
-    public ResponseEntity<?> deleteById(@PathVariable ObjectId myId) {
-     journalEntryService.deleteById(myId);
+    @DeleteMapping("id/{userName}/{myId}")
+    public ResponseEntity<?> deleteById(@PathVariable ObjectId myId, @PathVariable String userName) {
+     journalEntryService.deleteById(myId , userName) ;
      return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
